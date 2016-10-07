@@ -42,14 +42,14 @@ public class FontJump implements Tickable, Renderable {
 	 *            Text to show for the font.
 	 * @param direction
 	 *            Direction (0-180) the font moves.
-	 * @param vilocity
+	 * @param velocity
 	 *            Speed the font moves.
 	 * @param steps
 	 *            Amount of steps the font should move.
 	 * @param size
 	 *            Size of the font.
 	 */
-	public FontJump(int x, int y, String text, int direction, double vilocity, int steps, boolean size) {
+	public FontJump(int x, int y, String text, int direction, double velocity, int steps, boolean size) {
 		this.x = x;
 		this.y = y;
 		sx = x;
@@ -57,7 +57,7 @@ public class FontJump implements Tickable, Renderable {
 		this.size = size;
 		this.text = text;
 		this.steps = steps;
-		table(vilocity, direction, steps);
+		table(velocity, direction, steps);
 		tick();
 	}
 

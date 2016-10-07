@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -15,6 +16,7 @@ import javax.swing.JFrame;
 
 import game.gfx.Button;
 import game.gfx.ChatBox;
+import game.gfx.FontJump;
 import game.gfx.ProgressBar;
 import game.gfx.Screen;
 import game.gfx.TextBox;
@@ -31,25 +33,24 @@ import game.utils.TextBoxList;
  *
  * @author AJ
  */
-@SuppressWarnings("restriction")
 public class Game extends Canvas implements Runnable {
 
 	/**
 	 * I have no idea what this black magic is.
 	 */
-	private static final long serialVersionUID = -8332966340668015263L;
+	private static final long serialVersionUID = 1212454230410587523L;
 
 	/**
 	 * The {@link String} of the game. Starts with a v. This is used when
 	 * logging on to a server, so update it often to prevent out dated clients
 	 * from connecting.
 	 */
-	public static final String VERSION = "v2.0.3";
+	public static final String VERSION = "v0";
 
 	/**
 	 * The {@link String} of the class. This is displayed in the title.
 	 */
-	public static final String NAME = "Botnet Heroes";
+	public static final String NAME = "Line Bounce";
 
 	/**
 	 * The minimum {@link Out} of debug that is output. Should be
@@ -79,15 +80,10 @@ public class Game extends Canvas implements Runnable {
 	public final TextBoxList textboxes = new TextBoxList();
 
 	/**
-	 * Progress bar that appears when loading the game.
+	 * Progress bar that shows clicks Remaining.
 	 */
-	public final ProgressBar loadingProgress = new ProgressBar((Game.WIDTH / 2) - ((100 * 3) / 2), (Game.HEIGHT / 2)
+	public final ProgressBar clicksRemaining = new ProgressBar((Game.WIDTH / 2) - ((100 * 3) / 2), (Game.HEIGHT / 2)
 			- ((8 * 3) / 2), 100 * 3, 8 * 3);
-
-	/**
-	 * Box that chat appears in.
-	 */
-	public final ChatBox chat;
 
 	/**
 	 * The {@link BufferedImage} that is rendered to the JFrame.
@@ -95,7 +91,7 @@ public class Game extends Canvas implements Runnable {
 	private static final BufferedImage image = new BufferedImage(Game.WIDTH, Game.HEIGHT, BufferedImage.TYPE_INT_RGB);
 
 	/**
-	 * Error stream for the game.
+	 * Error stream for the game. Also Game messages.
 	 */
 	private final ChatBox err;
 
@@ -118,13 +114,10 @@ public class Game extends Canvas implements Runnable {
 	 * State of the running game
 	 */
 	public Stage stage = Stage.MENU;
+	
 
-	/**
-	 * Lane we are in.
-	 */
-	public int lane;
-	private int ticksPassed = 0;
-
+	FontJump fj = new FontJump(50, 100, "foo", 100, 45.0, 60, false);
+	
 	/**
 	 * Creates the Game class
 	 */
@@ -146,9 +139,9 @@ public class Game extends Canvas implements Runnable {
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		screen = new Screen(Game.WIDTH, Game.HEIGHT);
-		chat = new ChatBox(0, 24, 30, 10);
 		err = new ChatBox(0, 200, 50, 3);
 		mouse = new MouseHandler(this);
+		
 	}
 
 	/**
@@ -207,6 +200,7 @@ public class Game extends Canvas implements Runnable {
 		switch (stage) {
 		default:
 		case MENU:
+			fj.render(screen);
 			break;
 		}
 		for (final Button b : buttons.getAll()) {
@@ -220,6 +214,7 @@ public class Game extends Canvas implements Runnable {
 		}
 		final Graphics g = bs.getDrawGraphics();
 		g.drawImage(Game.image, 0, 0, getWidth(), getHeight(), null);
+		
 		g.dispose();
 		bs.show();
 	}
@@ -230,10 +225,17 @@ public class Game extends Canvas implements Runnable {
 	 * @see Game#run()
 	 */
 	private void tick() {
-		ticksPassed++;
 		switch (stage) {
 		default:
 		case MENU:
+			fj.tick();
+			if (buttons.get(BN.PLAY).isClicked())
+				stage = Stage.LV1;
+			if (buttons.get(BN.QUIT).isClicked())
+				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+					
+			break;
+		case LV1:
 			break;
 		}
 		err.tick();
@@ -287,7 +289,6 @@ public class Game extends Canvas implements Runnable {
 	public void restart(String reason) {
 		stage = Stage.MENU;
 		hideAll();
-		loadingProgress.setProgress(0);
 		Debug.out(Out.WARNING, "game.Game", "Error: " + reason);
 		err.addString(reason, 0xFFFF0000);
 	}
@@ -327,39 +328,16 @@ public class Game extends Canvas implements Runnable {
 		final int BUTTON_HEIGHT = 4;
 		final int BUTTON_PIX_WIDTH = 9;
 		final int BUTTON_PIX_HEIGHT = 9;
+//		buttons.add(new Button(screen, Game.WIDTH/3 - (9/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)- (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2), 
+//				9, 3, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.PLAY);
+//		buttons.get(BN.PLAY).text = "Play!";
+//		buttons.get(BN.PLAY).state = Button.States.ENABLED;
+//		
+//		buttons.add(new Button(screen, (Game.WIDTH / 2) + 10, (Game.HEIGHT / 2) - (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2),
+//				9, 3, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.QUIT);
+//		buttons.get(BN.QUIT).text = "Quit";
+//		buttons.get(BN.QUIT).state = Button.States.ENABLED;
 
-//		buttons.add(new Button(screen, (Game.WIDTH / 2) - (((BUTTON_WIDTH + 1) * BUTTON_PIX_WIDTH)), (Game.HEIGHT / 2)
-//				- (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2), BUTTON_WIDTH, BUTTON_HEIGHT, "/button_enabled.png",
-//				"/button_disabled.png", "/button_pressed.png"), BN.MENU_PLAY);
-//		buttons.get(BN.MENU_PLAY).text = "PLAY!";
-//
-//		buttons.add(new Button(screen, (Game.WIDTH / 2) + 10, (Game.HEIGHT / 2)
-//				- (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2), BUTTON_WIDTH, BUTTON_HEIGHT, "/button_enabled.png",
-//				"/button_disabled.png", "/button_pressed.png"), BN.MENU_CONNECT);
-//		buttons.get(BN.MENU_CONNECT).text = "JOIN!";
-//
-//		buttons.add(new Button(screen, (Game.WIDTH / 2) - ((BUTTON_WIDTH * BUTTON_PIX_WIDTH) / 2), (Game.HEIGHT / 2)
-//				- ((((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2) - 50), BUTTON_WIDTH, BUTTON_HEIGHT,
-//				"/button_enabled.png", "/button_disabled.png", "/button_pressed.png"), BN.MENU_QUIT);
-//		buttons.get(BN.MENU_QUIT).text = "Quit";
-//
-//		buttons.add(new Button(screen, (Game.WIDTH / 2) - ((BUTTON_WIDTH * BUTTON_PIX_WIDTH) / 2), (Game.HEIGHT / 2)
-//				- (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2), BUTTON_WIDTH, BUTTON_HEIGHT, "/button_enabled.png",
-//				"/button_disabled.png", "/button_pressed.png"), BN.CONNECT_CONNECT);
-//		buttons.get(BN.CONNECT_CONNECT).text = "Connect";
-//
-//		buttons.add(new Button(screen, 239, 224, 7, 2, "/button_enabled.png", "/button_disabled.png",
-//				"/button_pressed.png"), BN.MESSAGE_SEND);
-//		buttons.get(BN.MESSAGE_SEND).text = "Send";
-//
-//		buttons.add(new Button(screen, 0, 24, 7, 2, "/button_enabled.png", "/button_disabled.png",
-//				"/button_pressed.png"), BN.PREV_LANE);
-//		buttons.get(BN.PREV_LANE).text = "<";
-//
-//		buttons.add(new Button(screen, 92, 24, 7, 2, "/button_enabled.png", "/button_disabled.png",
-//				"/button_pressed.png"), BN.NEXT_LANE);
-//		buttons.get(BN.NEXT_LANE).text = ">";
-//
 //		textboxes.add(new TextBox(screen, (Game.WIDTH / 2) - (256 / 2), 30, 256, false, "Username"),
 //				TN.CONNECT_USERNAME);
 //		textboxes.add(new TextBox(screen, (Game.WIDTH / 2) - (256 / 2), 70, 256, false, "IP Address"), TN.CONNECT_IP);
