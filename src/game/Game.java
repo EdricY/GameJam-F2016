@@ -428,23 +428,27 @@ public class Game extends Canvas implements Runnable {
 			}
 			break;
 		case LV:
+			int mouseX = mouse.getX();
+			int mouseY = mouse.getY();
 			if (mp3player.isIdle()) mp3player.play();
 			if (restart) restart(null);
-			if (mouse.getX() >= -1 && mouse.getY() >= -1 && (currentX != mouse.getX() || currentY != mouse.getY())) //when clicked
+			
+			if (mouseX >= -1 && mouseY >= -1 && (currentX != mouseX || currentY != mouseY )) //when clicked
 			{
-				soundeffects.stopMusic();
-				soundeffects.changeMusic("/Blip.mp3");
-				soundeffects.play();
+				
+//				soundeffects.stopMusic();
+//				soundeffects.changeMusic("/Blip.mp3");
+//				soundeffects.play();
 				
 				
-				clicksearch:
+				
 				if(currentX == -1 && currentY == -1){ //if first time
-					currentX = mouse.getX();
-					currentY = mouse.getY();
+					currentX = mouseX;
+					currentY = mouseY;
 				}
 				
 				else{ //otherwise do this on click
-					
+					clicksearch:
 					for (Area[] a: levelAreas)
 						for (Area area: a)
 							if (area.getType() == AreaType.NODRAW && area.contains(mouse.getCurrentX(), mouse.getCurrentY())){
@@ -464,10 +468,7 @@ public class Game extends Canvas implements Runnable {
 			for (Area[] a: levelAreas)
 				for (Area area: a)
 					if (area.getType() == AreaType.GOAL && area.contains((int)ball.getX(), (int)ball.getY())){ // if in the goal
-						soundeffects.stopMusic();
-						soundeffects.changeMusic("/computer.mp3");
-						soundeffects.play();
-			
+						playSound("/Randomize3.wav");
 						currentLevel++;
 						if (currentLevel > 26){
 							stage = Stage.CREDITS;
