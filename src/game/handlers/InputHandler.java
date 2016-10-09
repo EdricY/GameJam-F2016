@@ -44,7 +44,7 @@ public class InputHandler implements KeyListener {
 			game.restart = true;
 		}
 		if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE){
-			if (game.stage == Stage.INSTRUCTIONS)
+			if (game.stage == Stage.INSTRUCTIONS || game.stage == Stage.CREDITS)
 				game.backspace = true;
 		}
 		if (e.getKeyCode() == KeyEvent.VK_6){

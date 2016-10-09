@@ -24,10 +24,10 @@ public class LineList{
 	
 	public void add(int x1, int y1, int x2, int y2, boolean visible) { 
 		lines.add(new Line(x1, y1, x2, y2, visible)); 
-		if (clines.isEmpty()){
-//			clines.add(new Circle(x1, y1, Game.radius));
-		}
-//		clines.add(new Circle(x2, y2, Game.radius));
+//		if (clines.isEmpty()){
+//			//clines.add(new Circle(x1, y1, Game.radius));
+//		}
+//		//clines.add(new Circle(x2, y2, Game.radius));
 		double slope = ((double)(y1-y2)/(double)(x2-x1));
 
 		double angle = Math.atan(slope);

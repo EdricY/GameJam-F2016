@@ -111,7 +111,7 @@ public class Game extends Canvas implements Runnable {
 	/**
 	 * Error stream for the game. Also Game messages.
 	 */
-	private final ChatBox err;
+	private ChatBox err;
 
 	/**
 	 * Used for updating and pressing the mouse.
@@ -160,6 +160,9 @@ public class Game extends Canvas implements Runnable {
 	public boolean skip1 = false;
 	public boolean skip2 = false;
 	public boolean skip3 = false;
+	private int mistakes = 0;
+	private long warntime;
+	private int messagesent = 0;
 	
 	MP3 mp3player = new MP3();
 	
@@ -184,7 +187,7 @@ public class Game extends Canvas implements Runnable {
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		screen = new Screen(Game.WIDTH, Game.HEIGHT);
-		err = new ChatBox(0, 200, 50, 3);
+		err = new ChatBox(0, 350, 100, 9);
 		mouse = new MouseHandler(this);
 		
 	}
@@ -246,11 +249,19 @@ public class Game extends Canvas implements Runnable {
 		default:
 		case MENU:
 			screen.render(0, 0, "/background.png");
-			if(mouse.getX() > 0 || start)
+			if(mouse.getX() > 0)
 				screen.render(0, 0, "/altbackground.png");
+			
 			break;
 		case INSTRUCTIONS:
 			screen.render(0, 0, "/instructions.png");
+			break;
+		case WARNING:		
+			screen.render(0, 0, "/warningbackground.png");
+			err.render(screen);
+			break;
+		case CREDITS:
+			screen.render(0, 0, "/credits.png");
 			break;
 		case LV:
 			break;
@@ -290,6 +301,7 @@ public class Game extends Canvas implements Runnable {
 			ball.draw(g);
 					
 			//lines.drawCollision(g, ball);
+			
 			g.setColor(new Color(222,184,135));
             Graphics2D g2 = (Graphics2D) g;
             g2.setStroke(new BasicStroke(3));
@@ -298,11 +310,14 @@ public class Game extends Canvas implements Runnable {
 					for (Area area: a)
 						if (area.getType() == AreaType.NODRAW && area.contains(mouse.getCurrentX(), mouse.getCurrentY()))
 							g.setColor(Color.RED);
+				g.setColor(new Color(222,184,135, 100));
 				g.drawLine(SCALE * currentX, SCALE * currentY, mouse.getCurrentX(), mouse.getCurrentY());
 			}
 			g.setColor(new Color(10, 10, 10, 50));
 			g.setFont(new Font("Sylfaen", Font.PLAIN, 400));
 			g.drawString(Integer.toString(currentLevel), Game.WIDTH/2 - 95, Game.HEIGHT/2 + 120);
+			g.setFont(new Font("Sylfaen", Font.PLAIN, 15));
+			g.drawString("mistakes: " + Integer.toString(mistakes), Game.WIDTH/2 - 60, Game.HEIGHT/2 + 145);
 
 			
 			g2.setStroke(new BasicStroke(1));
@@ -323,26 +338,67 @@ public class Game extends Canvas implements Runnable {
 		case MENU:
 			if (mp3player.isIdle()) mp3player.play();
 			if (buttons.get(BN.PLAY).isClicked()){
+				messagesent = 0;
 				hideAll();
 				fj = new FontJump(buttons.get(BN.PLAY).getX(), buttons.get(BN.PLAY).getY(), "Play!", 100, 45.0, 30, false);
 				
 				start = true;
-				//stage = Stage.LV;
+				
 			}
 			if (start && fj.isDone()) {
-				mp3player.changeMusic("/SOUND_main_theme.mp3"); mp3player.play();
-				stage = Stage.LV;
+				//mp3player.changeMusic("/SOUND_main_theme.mp3"); mp3player.play();
+				warntime = System.currentTimeMillis();
+				mp3player.stopMusic();
+				playSound("resrc/computer.wav");
 				readMap(currentLevel);
+				stage = Stage.WARNING;
 			}
 			if (buttons.get(BN.INSTRUCTIONS).isClicked()){
-//				buttons.get(BN.INSTRUCTIONS).state = States.HIDDEN;
 				hideAll();
 				fj = new FontJump(buttons.get(BN.INSTRUCTIONS).getX(), buttons.get(BN.INSTRUCTIONS).getY(), "Instructions", 100, 45.0, 30, false);
 				readMap(currentLevel);
 				stage = Stage.INSTRUCTIONS;
 			}
+			if (buttons.get(BN.CREDITS).isClicked()){
+				hideAll();
+				fj = new FontJump(buttons.get(BN.CREDITS).getX(), buttons.get(BN.CREDITS).getY(), "Credits", 100, 45.0, 30, false);
+				readMap(currentLevel);
+				stage = Stage.CREDITS;
+			}
 			if (buttons.get(BN.QUIT).isClicked())
 				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+			break;
+		case WARNING:
+			if (System.currentTimeMillis() > warntime + 1000 &&  messagesent == 0){
+				messagesent++;
+				err.addString("Attempting to connect to the server...", 0xFF00FF00);
+			}
+			if (warntime + 3000 < System.currentTimeMillis() &&  messagesent == 1){
+				messagesent++;
+				err.addString("Server Warning:", 0xFFFFFF00);
+			}
+			if (warntime + 3500 < System.currentTimeMillis() &&  messagesent == 2){
+				messagesent++;
+				err.addString("Engine Compromised. There's a mistake on our end.", 0xFFFFFF00);
+			}
+			if (warntime + 4000 < System.currentTimeMillis() &&  messagesent == 3){
+				messagesent++;
+				err.addString("We're working on fixing this as soon as possible.", 0xFFFFFF00);
+			}
+			if (warntime + 4500 < System.currentTimeMillis() &&  messagesent == 4){
+				messagesent++;
+				err.addString("Meanwhile, collision detection may act unexpectedly.", 0xFFFFFF00);
+			}
+			if (warntime + 5000 < System.currentTimeMillis() &&  messagesent == 5){
+				messagesent++;
+				err.addString("Reach the goal to help resolve the issue.", 0xFFFF0000);
+			}
+			if (warntime + 7000 < System.currentTimeMillis() && messagesent == 6){
+				mp3player.changeMusic("/SOUND_main_theme.mp3");
+				stage = Stage.LV;
+			}
+			 
+			
 			break;
 		case INSTRUCTIONS:
 			if (mp3player.isIdle()) mp3player.play();
@@ -352,6 +408,18 @@ public class Game extends Canvas implements Runnable {
 				buttons.get(BN.INSTRUCTIONS).state = States.ENABLED;
 				buttons.get(BN.PLAY).state = States.ENABLED;
 				buttons.get(BN.QUIT).state = States.ENABLED;
+				buttons.get(BN.CREDITS).state = States.ENABLED;
+			}
+			break;
+		case CREDITS:
+			if (mp3player.isIdle()) mp3player.play();
+			if (backspace){
+				backspace = false;
+				stage = Stage.MENU;
+				buttons.get(BN.INSTRUCTIONS).state = States.ENABLED;
+				buttons.get(BN.PLAY).state = States.ENABLED;
+				buttons.get(BN.QUIT).state = States.ENABLED;
+				buttons.get(BN.CREDITS).state = States.ENABLED;
 			}
 			break;
 		case LV:
@@ -364,7 +432,7 @@ public class Game extends Canvas implements Runnable {
 				if(currentX == -1 && currentY == -1){ //if first time
 					currentX = mouse.getX();
 					currentY = mouse.getY();
-				} 
+				}
 				
 				else{ //otherwise do this on click
 					
@@ -474,6 +542,7 @@ public class Game extends Canvas implements Runnable {
 			lines.reset();
 			readMap(currentLevel);
 			currentX = -1; currentY = -1;
+			mistakes++;
 		}
 //		stage = Stage.MENU;
 //		hideAll();
@@ -565,21 +634,26 @@ public class Game extends Canvas implements Runnable {
 		
 		mp3player.changeMusic("/SOUND_menu_theme.mp3"); mp3player.play();
 		
-		buttons.add(new Button(screen, Game.WIDTH/2 - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-55, 
-				17, 5, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.PLAY);
+		buttons.add(new Button(screen, Game.WIDTH/2 - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-75, 
+				17, 4, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.PLAY);
 		buttons.get(BN.PLAY).text = "Play!";
 		buttons.get(BN.PLAY).state = Button.States.ENABLED;
 		
-		buttons.add(new Button(screen, (Game.WIDTH/2) - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-55 + 5*30,
-				17, 5, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.QUIT);
+		buttons.add(new Button(screen, (Game.WIDTH/2) - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-75 + 4*45,
+				17, 4, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.QUIT);
 		buttons.get(BN.QUIT).text = "Quit";
 		buttons.get(BN.QUIT).state = Button.States.ENABLED;
 		
 		
-		buttons.add(new Button(screen, Game.WIDTH/2 - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2) -55+5*15, 
-				17, 5, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.INSTRUCTIONS);
+		buttons.add(new Button(screen, Game.WIDTH/2 - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2) -75+4*15, 
+				17, 4, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.INSTRUCTIONS);
 		buttons.get(BN.INSTRUCTIONS).text = "Instructions";
 		buttons.get(BN.INSTRUCTIONS).state = Button.States.ENABLED;
+		
+		buttons.add(new Button(screen, (Game.WIDTH/2) - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-75 + 4*30,
+				17, 4, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.CREDITS);
+		buttons.get(BN.CREDITS).text = "Credits";
+		buttons.get(BN.CREDITS).state = Button.States.ENABLED;
 
 //		textboxes.add(new TextBox(screen, (Game.WIDTH / 2) - (256 / 2), 30, 256, false, "Username"),
 //				TN.CONNECT_USERNAME);
@@ -602,12 +676,20 @@ public class Game extends Canvas implements Runnable {
 		/** Levels .*/
 		LV,
 
-		
 		/**
 		 * Instruction menu
 		 */
 		INSTRUCTIONS,
 		
+		/**
+		 * Credits
+		 */
+		CREDITS,
+		
+		/**
+		 * Credits
+		 */
+		WARNING,
 	}
 
 	/**
@@ -616,7 +698,7 @@ public class Game extends Canvas implements Runnable {
 	 *
 	 */
 	public enum BN {
-		PLAY, QUIT, INSTRUCTIONS;
+		PLAY, QUIT, INSTRUCTIONS, CREDITS;
 	}
 
 	/**

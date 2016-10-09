@@ -44,6 +44,8 @@ public class Screen {
 		sprites.add(new Sprite("/background.png"));
 		sprites.add(new Sprite("/altbackground.png"));
 		sprites.add(new Sprite("/instructions.png"));
+		sprites.add(new Sprite("/credits.png"));
+		sprites.add(new Sprite("/warningbackground.png"));
 
 		// Sprite sheets. Added here to guarantee their availability at runtime.
 		spritesheets.add(new SpriteSheet("/font.png", 26, 4));

@@ -34,10 +34,6 @@ public class Ball implements Renderable, Tickable{
 	
 	private String imgFile;
 
-	private final CopyOnWriteArrayList<FontJump> jumping = new CopyOnWriteArrayList<>();
-	
-	private boolean justDied = false;
-
     public Ball(double x, double y, int radius)
     {
         this.x = x;
