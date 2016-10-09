@@ -155,12 +155,12 @@ public class Ball implements Renderable, Tickable{
 	public void bounce(double angle) { //angle of the wall in radians
 		if (angle != -10)
 		{
-			System.out.println("angle:" + angle);
+			//System.out.println("angle:" + angle);
 
 			//angle = angle + Math.PI;
 			double vel = Math.sqrt(velX*velX + velY*velY);
 				
-			System.out.println("sin: " +  Math.sin(angle));
+			//System.out.println("sin: " +  Math.sin(angle));
 			if (velY >= 0){
 				velY = .9* vel* -Math.cos(angle);
 				velX = .9* vel* Math.sin(angle);
@@ -169,7 +169,7 @@ public class Ball implements Renderable, Tickable{
 				velY = .9* vel* Math.cos(angle);
 				velX = .9* vel* -Math.sin(Math.PI-angle);
 			}
-			System.out.println("cos: " +  Math.cos(angle));
+			//System.out.println("cos: " +  Math.cos(angle));
 					
 		}
 		

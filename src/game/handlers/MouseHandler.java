@@ -47,7 +47,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 		lastClickedX = x;
 		lastClickedY = y;
 		
-		System.out.println(x + " " + y);
+		//System.out.println(x + " " + y);
 	}
 
 	@Override

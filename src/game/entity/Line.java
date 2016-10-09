@@ -23,7 +23,7 @@ public class Line extends Shape{
 		this.b = y1 - (m*x1);
 		v = visible;
 		
-		System.out.println("l created! x1:" + x1 + " y1:" + y1 + " x2:" + x2 + " y2:" + y2 + " m: " + m + " b: " + b);
+		//System.out.println("l created! x1:" + x1 + " y1:" + y1 + " x2:" + x2 + " y2:" + y2 + " m: " + m + " b: " + b);
 	}
 	public void draw(Graphics g){ 
 		if (v)
@@ -31,7 +31,7 @@ public class Line extends Shape{
 		}
 	public boolean collision(double x1, double y1, double x2, double y2){
 		if (Line2D.linesIntersect(this.x1, this.y1, this.x2, this.y2, x1, y1, x2, y2)){
-			System.out.println("lintersect! x: " + x1 + "y : " + y1 );
+			//System.out.println("lintersect! x: " + x1 + "y : " + y1 );
 			return true;
 		}
 		else return false;

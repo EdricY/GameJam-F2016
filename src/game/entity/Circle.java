@@ -21,7 +21,7 @@ public class Circle extends Shape{
 		public boolean collision(double x1, double y1, double x2, double y2){ //I am so sorry about this
 			
 			if(Math.sqrt((x-x1)*(x-x1) + (y-y1)*(y-y1)) >= r && Math.sqrt((x-x2)*(x-x2) + (y-y2)*(y-y2)) <= r ){
-				System.out.println("cintersect! x: " + x1 + "y : " + y1 );
+				//System.out.println("cintersect! x: " + x1 + "y : " + y1 );
 				return true;
 			}
 			return false;
