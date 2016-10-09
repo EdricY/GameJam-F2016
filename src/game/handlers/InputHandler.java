@@ -1,6 +1,7 @@
 package game.handlers;
 
 import game.Game;
+import game.Game.Stage;
 import game.gfx.Button;
 import game.gfx.Font;
 import game.gfx.TextBox;
@@ -28,21 +29,55 @@ public class InputHandler implements KeyListener {
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-			for (final Button b : game.buttons.getAll()) {
-				if ((b.state == Button.States.ENABLED) || (b.state == Button.States.PRESSED)) {
-					if (b.text.equals("Connect") || b.text.equals("Host") || b.text.equals("Send")) {
-						b.state = Button.States.PRESSED;
-					} else {
-						b.state = Button.States.ENABLED;
-					}
-				}
-			}
+//		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+//			for (final Button b : game.buttons.getAll()) {
+//				if ((b.state == Button.States.ENABLED) || (b.state == Button.States.PRESSED)) {
+//					if (b.text.equals("Connect") || b.text.equals("Host") || b.text.equals("Send")) {
+//						b.state = Button.States.PRESSED;
+//					} else {
+//						b.state = Button.States.ENABLED;
+//					}
+//				}
+//			}
+//		}
+		if (e.getKeyCode() == KeyEvent.VK_R){
+			game.restart = true;
 		}
+		if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE){
+			if (game.stage == Stage.INSTRUCTIONS)
+				game.backspace = true;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_6){
+			game.skip1 = true;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_5){
+			game.skip3 = true;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_Q){
+			game.skip2 = true;
+		}
+
+		
+		
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_6){
+			game.skip1 = false;
+			game.skip2 = false;
+			game.skip3 = false;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_Q){
+			game.skip1 = false;
+			game.skip2 = false;
+			game.skip3 = false;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_5){
+			game.skip1 = false;
+			game.skip2 = false;
+			game.skip3 = false;
+		}
 		if (e.getKeyCode() == KeyEvent.VK_TAB) {
 			int index = -1;
 			for (int i = 0; i < game.textboxes.getAll().size(); i++) {
@@ -77,13 +112,13 @@ public class InputHandler implements KeyListener {
 		if (t == null) {
 			return;
 		}
-		if (Font.CHARS.indexOf(e.getKeyChar() + "") >= 0) {
-			if (t.text.length() < Constants.MESSAGE_LENGTH) {
-				t.text += e.getKeyChar() + "";
-			} else {
-				Toolkit.getDefaultToolkit().beep();
-			}
-		}
+//		if (Font.CHARS.indexOf(e.getKeyChar() + "") >= 0) {
+//			if (t.text.length() < Constants.MESSAGE_LENGTH) {
+//				t.text += e.getKeyChar() + "";
+//			} else {
+//				Toolkit.getDefaultToolkit().beep();
+//			}
+//		}
 		if (e.getKeyChar() == KeyEvent.VK_BACK_SPACE) {
 			if (t.text.length() > 0) {
 				t.text = t.text.substring(0, t.text.length() - 1);

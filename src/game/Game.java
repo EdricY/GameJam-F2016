@@ -1,20 +1,37 @@
 package game;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
 import javax.swing.JFrame;
 
+import game.entity.Area;
+import game.entity.AreaType;
+import game.entity.Ball;
+import game.entity.LineList;
 import game.gfx.Button;
+import game.gfx.Button.States;
 import game.gfx.ChatBox;
 import game.gfx.FontJump;
 import game.gfx.ProgressBar;
@@ -25,6 +42,7 @@ import game.handlers.MouseHandler;
 import game.handlers.WindowHandler;
 import game.utils.ButtonList;
 import game.utils.Debug;
+import game.utils.MP3;
 import game.utils.Out;
 import game.utils.TextBoxList;
 
@@ -45,7 +63,7 @@ public class Game extends Canvas implements Runnable {
 	 * logging on to a server, so update it often to prevent out dated clients
 	 * from connecting.
 	 */
-	public static final String VERSION = "v0";
+	public static final String VERSION = "v1.0";
 
 	/**
 	 * The {@link String} of the class. This is displayed in the title.
@@ -62,7 +80,7 @@ public class Game extends Canvas implements Runnable {
 	/**
 	 * Integer representing the dimensions of the JFrame.
 	 */
-	public static final int WIDTH = 480, HEIGHT = (Game.WIDTH / 16) * 9, SCALE = 2;
+	public static final int WIDTH = 960, HEIGHT = (Game.WIDTH / 16) * 9, SCALE = 1;
 
 	/**
 	 * The {@link JFrame} window the game is rendered to.
@@ -115,8 +133,35 @@ public class Game extends Canvas implements Runnable {
 	 */
 	public Stage stage = Stage.MENU;
 	
-
-	FontJump fj = new FontJump(50, 100, "foo", 100, 45.0, 60, false);
+	/**
+	 * FontJump for awesome menu effects!
+	 */
+	FontJump fj;
+	
+	/**
+	 * Main Ball for the game
+	 */
+	Ball ball;
+	
+	public static int radius = 15;
+	
+	/**
+	 * Main Ball for the game
+	 */
+	LineList lines = new LineList();
+	int currentX = -1, currentY = -1;
+	Area testA = new Area(AreaType.NODRAW, 50,100, 100, 150);
+	Area[][] levelAreas = new Area[18][32];
+	BufferedImage mapimg = null;
+	int currentLevel = 0;
+	public static boolean restart = false;
+	public boolean backspace = false;
+	private boolean start = false;
+	public boolean skip1 = false;
+	public boolean skip2 = false;
+	public boolean skip3 = false;
+	
+	MP3 mp3player = new MP3();
 	
 	/**
 	 * Creates the Game class
@@ -196,13 +241,25 @@ public class Game extends Canvas implements Runnable {
 			createBufferStrategy(3); // Triple buffering!
 			return;
 		}
-
+		
 		switch (stage) {
 		default:
 		case MENU:
-			fj.render(screen);
+			screen.render(0, 0, "/background.png");
+			if(mouse.getX() > 0 || start)
+				screen.render(0, 0, "/altbackground.png");
+			break;
+		case INSTRUCTIONS:
+			screen.render(0, 0, "/instructions.png");
+			break;
+		case LV:
 			break;
 		}
+		//if (ball != null) ball.render(screen);
+		
+		if (fj != null) fj.render(screen);
+
+		
 		for (final Button b : buttons.getAll()) {
 			b.render(screen);
 		}
@@ -214,7 +271,43 @@ public class Game extends Canvas implements Runnable {
 		}
 		final Graphics g = bs.getDrawGraphics();
 		g.drawImage(Game.image, 0, 0, getWidth(), getHeight(), null);
-		
+		//use graphics here
+		switch (stage) {
+		default:
+		case MENU:
+			break;
+		case INSTRUCTIONS:
+			break;
+		case LV:
+			for (Area[] a: levelAreas)
+				for (Area area: a)
+					if (area != null){
+						area.draw(g);
+					}
+			g.setColor(new Color(222,184,135));
+			lines.draw(g);
+			g.setColor(new Color(117,68,133));
+			ball.draw(g);
+					
+			//lines.drawCollision(g, ball);
+			g.setColor(new Color(222,184,135));
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setStroke(new BasicStroke(3));
+			if (currentX != -1 && currentY != -1){
+				for (Area[] a: levelAreas)
+					for (Area area: a)
+						if (area.getType() == AreaType.NODRAW && area.contains(mouse.getCurrentX(), mouse.getCurrentY()))
+							g.setColor(Color.RED);
+				g.drawLine(SCALE * currentX, SCALE * currentY, mouse.getCurrentX(), mouse.getCurrentY());
+			}
+			g.setColor(new Color(10, 10, 10, 50));
+			g.setFont(new Font("Sylfaen", Font.PLAIN, 400));
+			g.drawString(Integer.toString(currentLevel), Game.WIDTH/2 - 95, Game.HEIGHT/2 + 120);
+
+			
+			g2.setStroke(new BasicStroke(1));
+			break;
+		}
 		g.dispose();
 		bs.show();
 	}
@@ -228,16 +321,105 @@ public class Game extends Canvas implements Runnable {
 		switch (stage) {
 		default:
 		case MENU:
-			fj.tick();
-			if (buttons.get(BN.PLAY).isClicked())
-				stage = Stage.LV1;
+			if (mp3player.isIdle()) mp3player.play();
+			if (buttons.get(BN.PLAY).isClicked()){
+				hideAll();
+				fj = new FontJump(buttons.get(BN.PLAY).getX(), buttons.get(BN.PLAY).getY(), "Play!", 100, 45.0, 30, false);
+				
+				start = true;
+				//stage = Stage.LV;
+			}
+			if (start && fj.isDone()) {
+				mp3player.changeMusic("/SOUND_main_theme.mp3"); mp3player.play();
+				stage = Stage.LV;
+				readMap(currentLevel);
+			}
+			if (buttons.get(BN.INSTRUCTIONS).isClicked()){
+//				buttons.get(BN.INSTRUCTIONS).state = States.HIDDEN;
+				hideAll();
+				fj = new FontJump(buttons.get(BN.INSTRUCTIONS).getX(), buttons.get(BN.INSTRUCTIONS).getY(), "Instructions", 100, 45.0, 30, false);
+				readMap(currentLevel);
+				stage = Stage.INSTRUCTIONS;
+			}
 			if (buttons.get(BN.QUIT).isClicked())
 				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+			break;
+		case INSTRUCTIONS:
+			if (mp3player.isIdle()) mp3player.play();
+			if (backspace){
+				backspace = false;
+				stage = Stage.MENU;
+				buttons.get(BN.INSTRUCTIONS).state = States.ENABLED;
+				buttons.get(BN.PLAY).state = States.ENABLED;
+				buttons.get(BN.QUIT).state = States.ENABLED;
+			}
+			break;
+		case LV:
+			if (mp3player.isIdle()) mp3player.play();
+			if (restart) restart(null);
+			if (mouse.getX() >= -1 && mouse.getY() >= -1 && (currentX != mouse.getX() || currentY != mouse.getY())) //when clicked
+			{
+				playSound("resrc/Blip.wav");
+				clicksearch:
+				if(currentX == -1 && currentY == -1){ //if first time
+					currentX = mouse.getX();
+					currentY = mouse.getY();
+				} 
+				
+				else{ //otherwise do this on click
 					
+					for (Area[] a: levelAreas)
+						for (Area area: a)
+							if (area.getType() == AreaType.NODRAW && area.contains(mouse.getCurrentX(), mouse.getCurrentY())){
+								Toolkit.getDefaultToolkit().beep();
+								break clicksearch;
+							}
+				
+					ball.activate();
+					System.out.println("A");
+					lines.add(currentX, currentY, mouse.getX(), mouse.getY(), true);
+					currentX = mouse.getX();
+					currentY = mouse.getY();
+					}
+			
+				}
+			//run all the time duringlevel
+			
+			for (Area[] a: levelAreas)
+				for (Area area: a)
+					if (area.getType() == AreaType.GOAL && area.contains((int)ball.getX(), (int)ball.getY())){ // if in the goal
+						currentLevel++;
+						lines.reset();
+						readMap(currentLevel);
+						currentX = -1; currentY = -1;
+					}
+			if(ball != null) ball.tick(lines, levelAreas);
+			//Super secret level passing technique
+			if (skip1 && skip2){
+				System.out.println("Skip!");
+				skip1 = false;
+				skip2 = false;
+				skip3 = false;
+				currentLevel++;
+				lines.reset();
+				readMap(currentLevel);
+				currentX = -1; currentY = -1;
+			}
+			if (skip1 && skip3){
+				System.out.println("Skip back!");
+				skip1 = false;
+				skip2 = false;
+				skip3 = false;
+				currentLevel=currentLevel - 2;
+				lines.reset();
+				readMap(currentLevel);
+				currentX = -1; currentY = -1;
+			}
+			
 			break;
-		case LV1:
-			break;
+		//if(ball != null) ball.tick();
 		}
+		if(fj != null && !fj.isDone()) fj.tick();
 		err.tick();
 		for (final Button b : buttons.getAll()) {
 			if ((b.state == Button.States.ENABLED) || (b.state == Button.States.PRESSED)
@@ -287,10 +469,16 @@ public class Game extends Canvas implements Runnable {
 	 * @param reason Reason given for the sudden restart.
 	 */
 	public void restart(String reason) {
-		stage = Stage.MENU;
-		hideAll();
-		Debug.out(Out.WARNING, "game.Game", "Error: " + reason);
-		err.addString(reason, 0xFFFF0000);
+		if (currentX != -1 && currentY != -1){
+			restart = false;
+			lines.reset();
+			readMap(currentLevel);
+			currentX = -1; currentY = -1;
+		}
+//		stage = Stage.MENU;
+//		hideAll();
+//		Debug.out(Out.WARNING, "game.Game", "Error: " + reason);
+//		err.addString(reason, 0xFFFF0000);
 	}
 
 	/**
@@ -306,6 +494,44 @@ public class Game extends Canvas implements Runnable {
 		return null;
 	}
 
+	public void readMap(int level){
+		for (int i = 0; i < 18; i++)
+			for (int j = 0; j < 32; j++){
+				Area a = new Area(AreaType.getAreaType(new Color(mapimg.getRGB(j, i+(18*currentLevel)))), j*30, i*30, 30, 30);
+				levelAreas[i][j] = a;
+				if (a.getType() == AreaType.BALL)
+					ball = new Ball(j*30 + 15, i*30 + 15,radius);
+				if (a.getType() == AreaType.PLATFORM){
+					lines.add(j*30   , i*30   , j*30+30, i*30, false);
+					lines.add(j*30   , i*30   , j*30   , i*30+30, false);
+					lines.add(j*30   , i*30+30, j*30+30, i*30+30, false);
+					lines.add(j*30+30, i*30   , j*30+30, i*30+30, false);
+				}
+			}
+	}
+	
+	public static void playSound(String fileName) 
+   {
+        try {
+            File yourFile = new File(fileName);
+            AudioInputStream stream;
+            AudioFormat format;
+            DataLine.Info info;
+            Clip clip;
+        
+            stream = AudioSystem.getAudioInputStream(yourFile);
+            format = stream.getFormat();
+            info = new DataLine.Info(Clip.class, format);
+            clip = (Clip) AudioSystem.getLine(info);
+            clip.open(stream);
+            clip.start();
+        }
+        catch (Exception e) {
+        	e.printStackTrace();
+            System.out.println("failed to play sound: " + fileName);
+        }
+   }
+	
 	/**
 	 * @param args
 	 *            Arguments used to start the game with.
@@ -321,6 +547,13 @@ public class Game extends Canvas implements Runnable {
 	 * Code that runs ONE TIME when the game is started up.
 	 */
 	private void init() {
+		
+		try {
+		    mapimg = ImageIO.read(new File("resrc/map.png"));
+		} catch (IOException e) { e.printStackTrace();}
+
+		System.out.println(new Color(mapimg.getRGB(1,1)).getRed());
+		
 		new InputHandler(this);
 		new WindowHandler(this);
 		frame.setVisible(true); // After init, show the frame.
@@ -328,15 +561,25 @@ public class Game extends Canvas implements Runnable {
 		final int BUTTON_HEIGHT = 4;
 		final int BUTTON_PIX_WIDTH = 9;
 		final int BUTTON_PIX_HEIGHT = 9;
-//		buttons.add(new Button(screen, Game.WIDTH/3 - (9/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)- (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2), 
-//				9, 3, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.PLAY);
-//		buttons.get(BN.PLAY).text = "Play!";
-//		buttons.get(BN.PLAY).state = Button.States.ENABLED;
-//		
-//		buttons.add(new Button(screen, (Game.WIDTH / 2) + 10, (Game.HEIGHT / 2) - (((BUTTON_HEIGHT + 1) * BUTTON_PIX_HEIGHT) / 2),
-//				9, 3, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.QUIT);
-//		buttons.get(BN.QUIT).text = "Quit";
-//		buttons.get(BN.QUIT).state = Button.States.ENABLED;
+		
+		
+		mp3player.changeMusic("/SOUND_menu_theme.mp3"); mp3player.play();
+		
+		buttons.add(new Button(screen, Game.WIDTH/2 - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-55, 
+				17, 5, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.PLAY);
+		buttons.get(BN.PLAY).text = "Play!";
+		buttons.get(BN.PLAY).state = Button.States.ENABLED;
+		
+		buttons.add(new Button(screen, (Game.WIDTH/2) - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2)-55 + 5*30,
+				17, 5, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.QUIT);
+		buttons.get(BN.QUIT).text = "Quit";
+		buttons.get(BN.QUIT).state = Button.States.ENABLED;
+		
+		
+		buttons.add(new Button(screen, Game.WIDTH/2 - (18/2)*BUTTON_PIX_WIDTH, (Game.HEIGHT / 2) -55+5*15, 
+				17, 5, "/button_disabled.png", "/button_enabled.png", "/button_pressed.png") , BN.INSTRUCTIONS);
+		buttons.get(BN.INSTRUCTIONS).text = "Instructions";
+		buttons.get(BN.INSTRUCTIONS).state = Button.States.ENABLED;
 
 //		textboxes.add(new TextBox(screen, (Game.WIDTH / 2) - (256 / 2), 30, 256, false, "Username"),
 //				TN.CONNECT_USERNAME);
@@ -355,8 +598,16 @@ public class Game extends Canvas implements Runnable {
 		 * The game is at the main menu.
 		 */
 		MENU, 
-		/** Tutorial Level for .*/
-		LV1 
+		
+		/** Levels .*/
+		LV,
+
+		
+		/**
+		 * Instruction menu
+		 */
+		INSTRUCTIONS,
+		
 	}
 
 	/**
@@ -365,7 +616,7 @@ public class Game extends Canvas implements Runnable {
 	 *
 	 */
 	public enum BN {
-		PLAY, QUIT
+		PLAY, QUIT, INSTRUCTIONS;
 	}
 
 	/**

@@ -11,9 +11,13 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 
 	private int x = Integer.MIN_VALUE;
 	private int y = Integer.MIN_VALUE;
-
-	private int[] actions = new int[Constants.MOBS_PER_LANE * Constants.LANES];
-	private int lastClicked;
+	
+	private int state = 0; //0 = released, 1 = pressed
+	
+	private int lastClickedX = Integer.MIN_VALUE;
+	private int lastClickedY = Integer.MIN_VALUE;
+	private int currentX = 0;
+	private int currentY = 0;
 
 	private final Game game;
 
@@ -39,6 +43,11 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	public void mousePressed(MouseEvent e) {
 		x = e.getX();
 		y = e.getY();
+		
+		lastClickedX = x;
+		lastClickedY = y;
+		
+		System.out.println(x + " " + y);
 	}
 
 	@Override
@@ -55,25 +64,31 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 		return y / Game.SCALE;
 	}
 
-	public int[] getActions() {
-		return actions;
+	public int getLastClickedX() {
+		return lastClickedX;
 	}
-
-	public int getLastClicked() {
-		return lastClicked;
+	public int getLastClickedY() {
+		return lastClickedY;
 	}
-
+	public int getCurrentX() {
+		return currentX;
+	}
+	public int getCurrentY() {
+		return currentY;
+	}
+	
 	public void resetActions() {
-		actions = new int[Constants.MOBS_PER_LANE * Constants.LANES];
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		x = e.getX();
-		y = e.getY();
+		currentX = e.getX();
+		currentY = e.getY();
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
+		currentX = e.getX();
+		currentY = e.getY();
 	}
 }

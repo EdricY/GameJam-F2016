@@ -22,7 +22,7 @@ public class ButtonList {
 		boolean adding = true;
 		for (final Game.BN names : buttonnames) {
 			if (names == name) {
-				Debug.out(Out.SEVERE, "game.utils.ButtonList", "Name not unique! Abort!");
+				//Debug.out(Out.SEVERE, "game.utils.ButtonList", "Name not unique! Abort!");
 				adding = false;
 			}
 		}

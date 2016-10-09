@@ -1,5 +1,7 @@
 package game.gfx;
 
+import java.awt.Graphics;
+
 import game.utils.Renderable;
 import game.utils.Tickable;
 
@@ -63,7 +65,7 @@ public class FontJump implements Tickable, Renderable {
 
 	@Override
 	public void tick() {
-		if (tick <= (steps + 120)) {
+		if (tick <= (steps + 25)) {
 			final double time = tick * dt;
 			x = -(tick * v0x * dt) + sx;
 			y = -(FontJump.displacement(v0y, time, FontJump.ACCELERATION)) + sy;
@@ -75,7 +77,11 @@ public class FontJump implements Tickable, Renderable {
 
 	@Override
 	public void render(Screen screen) {
-		Font.render(screen, text, (int) x, (int) y, 0xFFFF0000, size);
+		Font.render(screen, text, (int) x, (int) y, 0x00000000, size);
+	}
+	
+	public void draw(Graphics g){
+		//g.setFont(new Font());
 	}
 
 	private static double displacement(double v0, double t, double a) {

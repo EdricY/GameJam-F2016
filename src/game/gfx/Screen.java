@@ -42,22 +42,15 @@ public class Screen {
 		// Sprites. Added here to guarantee their availability at runtime.
 		sprites.add(new Sprite("/icon.png"));
 		sprites.add(new Sprite("/background.png"));
-		sprites.add(new Sprite("/game.png"));
+		sprites.add(new Sprite("/altbackground.png"));
+		sprites.add(new Sprite("/instructions.png"));
 
 		// Sprite sheets. Added here to guarantee their availability at runtime.
 		spritesheets.add(new SpriteSheet("/font.png", 26, 4));
 		spritesheets.add(new SpriteSheet("/smallfont.png", 26, 4));
-		spritesheets.add(new SpriteSheet("/progress.png", 3, 3));
-		spritesheets.add(new SpriteSheet("/noprogress.png", 3, 3));
 		spritesheets.add(new SpriteSheet("/button_enabled.png", 3, 3));
 		spritesheets.add(new SpriteSheet("/button_disabled.png", 3, 3));
 		spritesheets.add(new SpriteSheet("/button_pressed.png", 3, 3));
-		spritesheets.add(new SpriteSheet("/logo.png", 1, 4));
-		spritesheets.add(new SpriteSheet("/Jerry_The_Icecream_Man.png", 2, 2));
-		spritesheets.add(new SpriteSheet("/Jerry_The_Icecream_Man_Hurt.png", 1, 1));
-		spritesheets.add(new SpriteSheet("/Jerry_The_Icecream_Man_Death.png", 2, 2));
-		spritesheets.add(new SpriteSheet("/poof.png", 4, 2));
-		spritesheets.add(new SpriteSheet("/click.png", 4, 2));
 		this.width = width;
 		this.height = height;
 		pixels = new int[width * height];
@@ -180,8 +173,8 @@ public class Screen {
 			}
 			index++;
 		}
-		Debug.out(Out.SEVERE, "game.gfx.Screen", "The index of the Sprite was not found"
-				+ "Please bring this to the developers attention ASAP!");
+		//Debug.out(Out.SEVERE, "game.gfx.Screen", "The index of the Sprite was not found"
+			//	+ "Please bring this to the developers attention ASAP!");
 		return null;
 	}
 }
