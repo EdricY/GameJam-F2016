@@ -14,17 +14,20 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.SourceDataLine;
 import javax.swing.JFrame;
 
 import game.entity.Area;
@@ -43,10 +46,13 @@ import game.handlers.InputHandler;
 import game.handlers.MouseHandler;
 import game.handlers.WindowHandler;
 import game.utils.ButtonList;
+import game.utils.Constants;
 import game.utils.Debug;
 import game.utils.MP3;
 import game.utils.Out;
 import game.utils.TextBoxList;
+import sun.audio.AudioPlayer;
+import sun.audio.AudioStream;
 
 /**
  * The main class that instantiates all other variables.
@@ -162,6 +168,7 @@ public class Game extends Canvas implements Runnable {
 	public boolean skip1 = false;
 	public boolean skip2 = false;
 	public boolean skip3 = false;
+	public boolean csearch = true;
 	private int mistakes = 0;
 	private long warntime;
 	private int messagesent = 0;
@@ -173,7 +180,7 @@ public class Game extends Canvas implements Runnable {
 	 * Creates the Game class
 	 */
 	public Game() {
-		Debug.out(Out.INFO, getClass().getName(), "You are running " + Game.VERSION);
+		//Debug.out(Out.INFO, getClass().getName(), "You are running " + Game.VERSION);
 
 		setMinimumSize(new Dimension(Game.WIDTH * Game.SCALE, Game.HEIGHT * Game.SCALE));
 		setMaximumSize(new Dimension(Game.WIDTH * Game.SCALE, Game.HEIGHT * Game.SCALE));
@@ -400,6 +407,7 @@ public class Game extends Canvas implements Runnable {
 			if (warntime + 7000 < System.currentTimeMillis() && messagesent == 6){
 				mp3player.changeMusic("/SOUND_main_theme.mp3");
 				mp3player.play();
+				start = false;
 				stage = Stage.LV;
 			}
 			 
@@ -435,34 +443,29 @@ public class Game extends Canvas implements Runnable {
 			
 			if (mouseX >= -1 && mouseY >= -1 && (currentX != mouseX || currentY != mouseY )) //when clicked
 			{
-				
-//				soundeffects.stopMusic();
-//				soundeffects.changeMusic("/Blip.mp3");
-//				soundeffects.play();
-				
-				
-				
+				clicksearch:
 				if(currentX == -1 && currentY == -1){ //if first time
 					currentX = mouseX;
 					currentY = mouseY;
 				}
-				
-				else{ //otherwise do this on click
-					clicksearch:
+				else if (csearch){ //otherwise do this on click
 					for (Area[] a: levelAreas)
 						for (Area area: a)
-							if (area.getType() == AreaType.NODRAW && area.contains(mouse.getCurrentX(), mouse.getCurrentY())){
+							if (area.contains(mouseX, mouseY) && area.getType() == AreaType.NODRAW){
 								Toolkit.getDefaultToolkit().beep();
+								playSound("/Blip.wav");
+								csearch = false;
 								break clicksearch;
-							}
-				
-					ball.activate();
-					lines.add(currentX, currentY, mouse.getX(), mouse.getY(), true);
-					currentX = mouse.getX();
-					currentY = mouse.getY();
-					}
-			
 				}
+				
+				ball.activate();
+				lines.add(currentX, currentY, mouseX, mouseY, true);
+				playSound("/Blip.wav");
+				currentX = mouseX;
+				currentY = mouseY;
+				}
+		
+			}
 			//run all the time duringlevel
 			
 			for (Area[] a: levelAreas)
@@ -471,6 +474,7 @@ public class Game extends Canvas implements Runnable {
 						playSound("/Randomize3.wav");
 						currentLevel++;
 						if (currentLevel > 26){
+							mp3player.changeMusic("/SOUND_menu_theme.mp3"); mp3player.play();
 							stage = Stage.CREDITS;
 							currentLevel = 0;
 						}
@@ -481,12 +485,13 @@ public class Game extends Canvas implements Runnable {
 			if(ball != null) ball.tick(lines, levelAreas);
 			//Super secret level passing technique
 			if (skip1 && skip2){
-				System.out.println("Skip!");
+				//System.out.println("Skip!");
 				skip1 = false;
 				skip2 = false;
 				skip3 = false;
 				currentLevel++;
 				if (currentLevel > 26){
+					mp3player.changeMusic("/SOUND_menu_theme.mp3"); mp3player.play();
 					stage = Stage.CREDITS;
 					currentLevel = 0;
 				}
@@ -494,12 +499,13 @@ public class Game extends Canvas implements Runnable {
 				readMap(currentLevel);
 				currentX = -1; currentY = -1;
 			}
-			if (skip1 && skip3){
-				System.out.println("Skip back!");
+			if (skip2 && skip3){
+				//System.out.println("Skip back!");
 				skip1 = false;
 				skip2 = false;
 				skip3 = false;
-				currentLevel=currentLevel - 2;
+				if (currentLevel > 0)
+					currentLevel=currentLevel - 1;
 				lines.reset();
 				readMap(currentLevel);
 				currentX = -1; currentY = -1;
@@ -600,26 +606,15 @@ public class Game extends Canvas implements Runnable {
 			}
 	}
 	
-	public void playSound(String fileName) 
-   {
-        try {
-            InputStream yourFile = Game.class.getResourceAsStream(fileName);
-            AudioInputStream stream;
-            AudioFormat format;
-            DataLine.Info info;
-            Clip clip;
-            stream = AudioSystem.getAudioInputStream(yourFile);
-            format = stream.getFormat();
-            info = new DataLine.Info(Clip.class, format);
-            clip = (Clip) AudioSystem.getLine(info);
-            clip.open(stream);
-            clip.start();
-        }
-        catch (Exception e) {
-        	e.printStackTrace();
-            System.out.println("failed to play sound: " + fileName);
-        }
-   }
+	private void playSound(String filename) {
+	try{
+		InputStream inputStream = Game.class.getResourceAsStream(filename);
+		AudioStream audioStream = new AudioStream(inputStream);
+		AudioPlayer.player.start(audioStream);
+	} catch (Exception e){
+		e.printStackTrace();
+		}
+	}
 	
 	/**
 	 * @param args

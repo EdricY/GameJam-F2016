@@ -43,7 +43,7 @@ public class Sprite {
 			image = ImageIO.read(Sprite.class.getResourceAsStream(path));
 		} catch (final Exception e) {
 			e.printStackTrace();
-			Debug.out(Out.SEVERE, "game.gfx.Sprite", "Failed to read " + path + "!");
+			//Debug.out(Out.SEVERE, "game.gfx.Sprite", "Failed to read " + path + "!");
 		}
 
 		if (image == null) {

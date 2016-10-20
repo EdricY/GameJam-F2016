@@ -50,20 +50,20 @@ public class Ball implements Renderable, Tickable{
 	public void draw(Graphics g){
 		
 		g.fillOval((int)(.5+x - r), (int)(.5+y - r), r*2, r*2);
-		Graphics2D g2 = (Graphics2D) g;
-		g2.setStroke(new BasicStroke(1));
-		Color oldc = new Color(g.getColor().getRed(),
-				g.getColor().getGreen(), 
-				g.getColor().getBlue());
-		Color c = new Color(Math.min(255, oldc.getRed()+20),
-				Math.min(255, oldc.getGreen()+20), 
-				Math.min(255, oldc.getBlue()+20));
-		g.setColor(c);
-		g.drawOval((int)(.5+x-r), (int)(.5+y-r), r*2, r*2);
-		g.setColor(oldc);
-        
-		g.setColor(Color.blue);
-		//g.drawLine((int)(.5+getX()), (int)(.5+getY()), (int)(.5+getX()+getVelX()), (int)(.5+getY()+getVelY()));
+//		Graphics2D g2 = (Graphics2D) g;
+//		g2.setStroke(new BasicStroke(4));
+//		Color oldc = new Color(g.getColor().getRed(),
+//				g.getColor().getGreen(), 
+//				g.getColor().getBlue());
+//		Color c = Color.BLACK;//new Color(Math.min(255, oldc.getRed()+20),
+//				//Math.min(255, oldc.getGreen()+20), 
+//				//Math.min(255, oldc.getBlue()+20));
+//		g.setColor(c);
+//		g.drawOval((int)(.5+x-r), (int)(.5+y-r), r*2, r*2);
+//		g.setColor(oldc);
+//        
+//		g.setColor(Color.blue);
+//		//g.drawLine((int)(.5+getX()), (int)(.5+getY()), (int)(.5+getX()+getVelX()), (int)(.5+getY()+getVelY()));
 		
 	}
 

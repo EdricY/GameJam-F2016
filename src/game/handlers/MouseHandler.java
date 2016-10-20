@@ -54,6 +54,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener {
 	public void mouseReleased(MouseEvent e) {
 		x = Integer.MIN_VALUE;
 		y = Integer.MIN_VALUE;
+		game.csearch = true;
 	}
 
 	public int getX() {
